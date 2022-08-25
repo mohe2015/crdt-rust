@@ -18,14 +18,31 @@
 
 // commutativity is required
 
-use std::{collections::HashSet, hash::Hash};
+use std::collections::HashSet;
 
+/*
+L ← Empty list that will contain the sorted nodes
+while exists nodes without a permanent mark do
+    select an unmarked node n
+    visit(n)
+
+function visit(node n)
+    if n has a permanent mark then
+        return
+
+    for each node m with an edge from n to m do
+        visit(m)
+
+    mark n with a permanent mark
+    add n to head of L
+*/
 
 pub fn topological_sort_visit<T>(node: DAGNode<T>) {
+
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) {
+pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) { // unmarked nodes
     // Depth-first search
     let l = Vec::new();
     let permanently_marked_nodes = HashSet::new();
@@ -47,6 +64,8 @@ pub struct CurrentState<T> {
 pub type DAGNodeCounter = DAGNode<i64>;
 
 pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
+
+//pub type DAGNodeOrderedGraph = DAGNode<Vec<i64>>;
 
 // low memory and high performance implementation
 
