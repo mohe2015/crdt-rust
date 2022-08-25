@@ -37,8 +37,17 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<T>(node: DAGNode<T>) {
+pub fn topological_sort_visit<T>(n: DAGNode<T>, l: &mut Vec<DAGNode<T>>, permanently_marked_nodes: &mut HashSet<DAGNode<T>>) {
+    if permanently_marked_nodes.contains(n) {
+        return;
+    }
 
+    for predecessor in n.predecessors {
+        topological_sort_visit(predecessor, l, permanently_marked_nodes);
+    }
+
+    permanently_marked_nodes.insert(n);
+    l.push(n);
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
@@ -48,10 +57,11 @@ pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) { // unmarked nodes
     let permanently_marked_nodes = HashSet::new();
 
     while !s.is_empty() {
-        topological_sort_visit(s.pop().unwrap())
+        topological_sort_visit(s.pop().unwrap(), &mut l, &mut permanently_marked_nodes);
     }
 }
 
+#[derive(PartialEq, Eq, Hash)]
 pub struct DAGNode<T> {
     predecessors: Vec<DAGNode<T>>,
     current_data: T
