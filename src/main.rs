@@ -18,7 +18,7 @@
 
 // commutativity is required
 
-use std::collections::HashSet;
+use std::{collections::HashSet, hash::Hash};
 
 /*
 L ← Empty list that will contain the sorted nodes
@@ -37,8 +37,8 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<T>(n: DAGNode<T>, l: &mut Vec<DAGNode<T>>, permanently_marked_nodes: &mut HashSet<DAGNode<T>>) {
-    if permanently_marked_nodes.contains(n) {
+pub fn topological_sort_visit<T>(n: DAGNode<T>, l: &mut Vec<DAGNode<T>>, permanently_marked_nodes: &mut HashSet<DAGNode<T>>) where T: PartialEq, T: Eq, T: Hash {
+    if permanently_marked_nodes.contains(&n) {
         return;
     }
 
@@ -51,7 +51,7 @@ pub fn topological_sort_visit<T>(n: DAGNode<T>, l: &mut Vec<DAGNode<T>>, permane
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) { // unmarked nodes
+pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) where T: PartialEq, T: Eq, T: Hash { // unmarked nodes
     // Depth-first search
     let l = Vec::new();
     let permanently_marked_nodes = HashSet::new();
@@ -62,7 +62,7 @@ pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) { // unmarked nodes
 }
 
 #[derive(PartialEq, Eq, Hash)]
-pub struct DAGNode<T> {
+pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Hash {
     predecessors: Vec<DAGNode<T>>,
     current_data: T
 }
