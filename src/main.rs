@@ -37,33 +37,33 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<T>(n: DAGNode<T>, l: &mut Vec<DAGNode<T>>, permanently_marked_nodes: &mut HashSet<DAGNode<T>>) where T: PartialEq, T: Eq, T: Hash {
+pub fn topological_sort_visit<T>(n: &DAGNode<T>, l: &mut Vec<&DAGNode<T>>, permanently_marked_nodes: &mut HashSet<DAGNode<T>>) where T: PartialEq, T: Eq, T: Hash {
     if permanently_marked_nodes.contains(&n) {
         return;
     }
 
-    for predecessor in n.predecessors {
+    for predecessor in &n.predecessors {
         topological_sort_visit(predecessor, l, permanently_marked_nodes);
     }
 
     permanently_marked_nodes.insert(n);
-    l.push(n);
+    l.push(&n);
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
 pub fn topological_sort<T>(mut s: Vec<DAGNode<T>>) where T: PartialEq, T: Eq, T: Hash { // unmarked nodes
     // Depth-first search
-    let l = Vec::new();
-    let permanently_marked_nodes = HashSet::new();
+    let mut l = Vec::new();
+    let mut permanently_marked_nodes = HashSet::new();
 
     while !s.is_empty() {
-        topological_sort_visit(s.pop().unwrap(), &mut l, &mut permanently_marked_nodes);
+        topological_sort_visit(&s.pop().unwrap(), &mut l, &mut permanently_marked_nodes);
     }
 }
 
 #[derive(PartialEq, Eq, Hash)]
-pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Hash {
-    predecessors: Vec<DAGNode<T>>,
+pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Hash {
+    predecessors: Vec<&'a DAGNode<'a, T>>,
     current_data: T
 }
 
@@ -71,9 +71,9 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub type DAGNodeCounter = DAGNode<i64>;
+//pub type DAGNodeCounter = DAGNode<i64>;
 
-pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
+//pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
 
 //pub type DAGNodeOrderedGraph = DAGNode<Vec<i64>>;
 
@@ -82,14 +82,14 @@ pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
 fn main() {
     println!("Hello, world!");
 
-    let test1 = DAGNodeCounter {
+   /* let test1 = DAGNodeCounter {
         current_data: 0,
         predecessors: vec![],
     };
     let test2 = DAGNodeCounter {
         current_data: 5,
         predecessors: vec![test1],
-    };
+    };*/
 
 
 }
