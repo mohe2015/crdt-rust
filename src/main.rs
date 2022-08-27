@@ -90,9 +90,11 @@ T: PartialEq, T: Eq, T: Hash,
 
         // And then create a collection of that length!
         let mut my_collection = RandomDAG(Vec::with_capacity(len));
-        for _ in 0..len {
+        for i in 0..len {
             let element = DAGNode {
-                predecessors: vec![],
+                predecessors: vec![
+                    &my_collection.0[u.int_in_range(0..=i)?]
+                ],
                 current_data: T::arbitrary(u)?
             };
             my_collection.0.push(element);
