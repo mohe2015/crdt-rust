@@ -42,12 +42,12 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<'a, T>(n: Rc<DAGNode<T>>, l: &mut Vec<Rc<DAGNode<T>>>, permanently_marked_nodes: &mut BTreeSet<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord {
+pub fn topological_sort_visit<'a, T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<RefCell<DAGNode<T>>>>, permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord {
     if permanently_marked_nodes.contains(&n) {
         return;
     }
 
-    for predecessor in &n.predecessors {
+    for predecessor in &n.borrow().predecessors {
         topological_sort_visit(predecessor.to_owned(), l, permanently_marked_nodes);
     }
 
@@ -56,7 +56,7 @@ pub fn topological_sort_visit<'a, T>(n: Rc<DAGNode<T>>, l: &mut Vec<Rc<DAGNode<T
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<'a, T>(mut s: Vec<Rc<DAGNode<T>>>) -> Vec<Rc<DAGNode<T>>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
+pub fn topological_sort<'a, T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCell<DAGNode<T>>>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
     // Depth-first search
     let mut l = Vec::new();
     let mut permanently_marked_nodes = BTreeSet::new();
@@ -70,7 +70,7 @@ pub fn topological_sort<'a, T>(mut s: Vec<Rc<DAGNode<T>>>) -> Vec<Rc<DAGNode<T>>
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Ord {
-    predecessors: Vec<Rc<DAGNode<T>>>,
+    predecessors: Vec<Rc<RefCell<DAGNode<T>>>>,
     current_data: T
 }
 
@@ -78,7 +78,7 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub struct RandomDAG<T>(Vec<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'static>;
+pub struct RandomDAG<T>(Vec<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'static>;
 
 impl<T> Arbitrary<'static> for RandomDAG<T>
 where
@@ -98,13 +98,13 @@ T: PartialEq, T: Eq, T: Ord,
                 ],
                 current_data: T::arbitrary(u)?
             };
-            my_collection.0.push(Rc::new(element));
+            my_collection.0.push(Rc::new(RefCell::new(element)));
         }
         for i in 0..len {
             let a = &my_collection;
             let b = &a.0;
             let c = b[u.choose_index(i)?].to_owned();
-            my_collection.0[i].predecessors.push(c);
+            my_collection.0[i].borrow_mut().predecessors.push(c);
 
         }
 
@@ -123,14 +123,14 @@ pub type DAGNodeCounter<'a> = DAGNode<i64>;
 fn main() {
     println!("Hello, world!");
 
-   let test1 = Rc::new(DAGNodeCounter {
+   let test1 = Rc::new(RefCell::new(DAGNodeCounter {
         current_data: 0,
         predecessors: vec![],
-    });
-    let test2 = Rc::new(DAGNodeCounter {
+    }));
+    let test2 = Rc::new(RefCell::new(DAGNodeCounter {
         current_data: 5,
         predecessors: vec![test1],
-    });
+    }));
 
     println!("{:#?}", topological_sort(vec![test2]));
 
