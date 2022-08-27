@@ -86,11 +86,16 @@ T: PartialEq, T: Eq, T: Hash,
         // Get an iterator of arbitrary `T`s.
         let iter = u.arbitrary_iter::<T>()?;
 
-        // And then create a collection!
-        let mut my_collection = RandomDAG(Vec::new());
-        for elem_result in iter {
-            let elem = elem_result?;
-            my_collection.insert(elem);
+        let len = u.arbitrary_len::<T>()?;
+
+        // And then create a collection of that length!
+        let mut my_collection = RandomDAG(Vec::with_capacity(len));
+        for _ in 0..len {
+            let element = DAGNode {
+                predecessors: vec![],
+                current_data: T::arbitrary(u)?
+            };
+            my_collection.0.push(element);
         }
 
         Ok(my_collection)
