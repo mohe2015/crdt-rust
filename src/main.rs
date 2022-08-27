@@ -18,11 +18,12 @@
 
 // commutativity is required
 
-use std::{collections::{HashSet, BTreeSet}, hash::Hash, convert::Infallible, cell::RefCell, pin::Pin};
+use std::{collections::{HashSet, BTreeSet}, hash::Hash, convert::Infallible, cell::RefCell, pin::Pin, rc::Rc};
 
 use arbitrary::{Arbitrary, Unstructured};
 
 // https://doc.rust-lang.org/std/pin/index.html
+// https://arunanshub.hashnode.dev/self-referential-structs-in-rust
 
 /*
 L ← Empty list that will contain the sorted nodes
@@ -41,7 +42,7 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<'a, T>, l: &mut Vec<&'a DAGNode<'a, T>>, permanently_marked_nodes: &mut BTreeSet<&'a DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Ord {
+pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<T>, l: &mut Vec<Rc<DAGNode<T>>>, permanently_marked_nodes: &mut BTreeSet<&'a Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord {
     if permanently_marked_nodes.contains(&n) {
         return;
     }
@@ -55,7 +56,7 @@ pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<'a, T>, l: &mut Vec<&'a DAGN
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNode<'a, T>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
+pub fn topological_sort<'a, T>(mut s: Vec<Rc<DAGNode<T>>>) -> Vec<Rc<DAGNode<T>>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
     // Depth-first search
     let mut l = Vec::new();
     let mut permanently_marked_nodes = BTreeSet::new();
@@ -68,8 +69,8 @@ pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNod
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Ord {
-    predecessors: RefCell<Vec<&'a DAGNode<'a, T>>>,
+pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Ord {
+    predecessors: Vec<Rc<DAGNode<T>>>,
     current_data: T
 }
 
@@ -77,9 +78,9 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub struct RandomDAG<'a, T>(Vec<Pin<Box<DAGNode<'a, T>>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
+pub struct RandomDAG<'a, T>(Vec<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
 
-impl<'a, T> Arbitrary<'a> for RandomDAG<'a, T>
+impl<'a, T> Arbitrary<'a> for Pin<Box<RandomDAG<'a, T>>>
 where
 T: PartialEq, T: Eq, T: Ord, 
     T: Arbitrary<'a>,
@@ -87,8 +88,10 @@ T: PartialEq, T: Eq, T: Ord,
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let len = u.arbitrary_len::<T>()?;
 
+        // somebody needs to own this stuff so this is really hard
+
         // And then create a collection of that length!
-        let mut my_collection = RandomDAG(Vec::with_capacity(len));
+        let mut my_collection: Pin<Box<RandomDAG<'a, T>>> = Box::pin(RandomDAG(Vec::with_capacity(len)));
         for i in 0..len {
             let element = DAGNode {
                 predecessors: RefCell::new(vec![
@@ -98,7 +101,10 @@ T: PartialEq, T: Eq, T: Ord,
             my_collection.0.push(Box::pin(element));
         }
         for i in 0..len {
-            my_collection.0[i].predecessors.borrow_mut().push(&my_collection.0[u.choose_index(i)?]);
+            let a = &my_collection;
+            let b = &a.0;
+            let c = &b[u.choose_index(i)?];
+            my_collection.0[i].predecessors.borrow_mut().push(c);
 
         }
 
@@ -106,7 +112,7 @@ T: PartialEq, T: Eq, T: Ord,
     }
 }
 
-pub type DAGNodeCounter<'a> = DAGNode<'a, i64>;
+pub type DAGNodeCounter<'a> = DAGNode<i64>;
 
 //pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
 
