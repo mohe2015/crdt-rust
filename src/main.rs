@@ -18,7 +18,7 @@
 
 // commutativity is required
 
-use std::{collections::HashSet, hash::Hash, convert::Infallible};
+use std::{collections::HashSet, hash::Hash, convert::Infallible, cell::RefCell};
 
 use arbitrary::{Arbitrary, Unstructured};
 
@@ -67,7 +67,7 @@ pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNod
 
 #[derive(PartialEq, Eq, Hash, Debug)]
 pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Hash {
-    predecessors: Vec<&'a DAGNode<'a, T>>,
+    predecessors: RefCell<Vec<&'a DAGNode<'a, T>>>,
     current_data: T
 }
 
@@ -92,12 +92,15 @@ T: PartialEq, T: Eq, T: Hash,
         let mut my_collection = RandomDAG(Vec::with_capacity(len));
         for i in 0..len {
             let element = DAGNode {
-                predecessors: vec![
-                    &my_collection.0[u.int_in_range(0..=i)?]
-                ],
+                predecessors: RefCell::new(vec![
+                ]),
                 current_data: T::arbitrary(u)?
             };
             my_collection.0.push(element);
+        }
+        for i in 0..len {
+            my_collection.0[i].predecessors.borrow_mut().push(&my_collection.0[u.choose_index(i)?]);
+
         }
 
         Ok(my_collection)
