@@ -68,9 +68,10 @@ pub fn topological_sort<'a, T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<Re
     l
 }
 
+// technically this is a multi dag as there can be multiple roots and multiple heads (there may be usecases where multiple people create concurrently)
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Ord {
-    predecessors: Vec<Rc<RefCell<DAGNode<T>>>>,
+    predecessors: BTreeSet<Rc<RefCell<DAGNode<T>>>>,
     current_data: T
 }
 
@@ -94,19 +95,19 @@ T: PartialEq, T: Eq, T: Ord,
         let mut my_collection: RandomDAG<T> = RandomDAG(Vec::with_capacity(len));
         for i in 0..len {
             let element = DAGNode {
-                predecessors: vec![
-                ],
+                predecessors: BTreeSet::new(),
                 current_data: T::arbitrary(u)?
             };
             my_collection.0.push(Rc::new(RefCell::new(element)));
         }
-        for i in 0..len {
+        for i in u.int_in_range(0..=len * 10) {
             let a = &my_collection;
             let b = &a.0;
             let c = b[u.choose_index(i)?].to_owned();
-            my_collection.0[i].borrow_mut().predecessors.push(c);
-
+            let d = b[u.choose_index(i)?].to_owned();
+            d.borrow_mut().predecessors.insert(c);
         }
+
 
         Ok(my_collection)
     }
@@ -125,11 +126,11 @@ fn main() {
 
    let test1 = Rc::new(RefCell::new(DAGNodeCounter {
         current_data: 0,
-        predecessors: vec![],
+        predecessors: BTreeSet::from([]),
     }));
     let test2 = Rc::new(RefCell::new(DAGNodeCounter {
         current_data: 5,
-        predecessors: vec![test1],
+        predecessors: BTreeSet::from([test1]),
     }));
 
     println!("{:#?}", topological_sort(vec![test2]));
