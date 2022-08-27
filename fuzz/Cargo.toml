@@ -12,7 +12,6 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 crdt = { path = ".." }
 
-
 # Prevent this from interfering with workspaces
 [workspace]
 members = ["."]

@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 arbitrary = { version = "1" }
+by_address = "1.0.4"

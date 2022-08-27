@@ -20,6 +20,8 @@
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
 use arbitrary::{Arbitrary, Unstructured};
+use by_address::ByAddress;
+
 
 // https://doc.rust-lang.org/std/pin/index.html
 // https://arunanshub.hashnode.dev/self-referential-structs-in-rust
@@ -42,9 +44,9 @@ function visit(node n)
 */
 
 pub fn topological_sort_visit<T>(
-    n: Rc<RefCell<DAGNode<T>>>,
-    l: &mut Vec<Rc<RefCell<DAGNode<T>>>>,
-    permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>,
+    n: ByAddress<Rc<RefCell<DAGNode<T>>>>,
+    l: &mut Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>,
+    permanently_marked_nodes: &mut BTreeSet<ByAddress<Rc<RefCell<DAGNode<T>>>>>,
 ) where
     T: PartialEq,
     T: Eq,
@@ -65,7 +67,7 @@ pub fn topological_sort_visit<T>(
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCell<DAGNode<T>>>>
+pub fn topological_sort<T>(mut s: Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>) -> Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>
 where
     T: PartialEq,
     T: Eq,
@@ -91,12 +93,12 @@ where
     T: Eq,
     T: Ord,
 {
-    pub predecessors: BTreeSet<Rc<RefCell<DAGNode<T>>>>,
+    pub predecessors: BTreeSet<ByAddress<Rc<RefCell<DAGNode<T>>>>>,
     pub current_data: T,
 }
 
 #[derive(Debug)]
-pub struct RandomDAG<T>(pub Vec<Rc<RefCell<DAGNode<T>>>>)
+pub struct RandomDAG<T>(pub Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>)
 where
     T: PartialEq,
     T: Eq,
@@ -124,7 +126,7 @@ where
                 predecessors: BTreeSet::new(),
                 current_data: T::arbitrary(u)?,
             };
-            my_collection.0.push(Rc::new(RefCell::new(element)));
+            my_collection.0.push(ByAddress(Rc::new(RefCell::new(element))));
         }
         if len > 1 {
             for _ in 0..u.int_in_range(0..=len * 10)? {
