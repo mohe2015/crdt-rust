@@ -1,4 +1,3 @@
-
 // we need to store all past operations to allow to verify them
 // so we need a DAG (signed)
 // storing the DAG, querying the DAG, merging the DAG and calculating
@@ -18,7 +17,7 @@
 
 // commutativity is required
 
-use std::{collections::{BTreeSet}, cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
 use arbitrary::{Arbitrary, Unstructured};
 
@@ -42,9 +41,17 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<RefCell<DAGNode<T>>>>, permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord {
+pub fn topological_sort_visit<T>(
+    n: Rc<RefCell<DAGNode<T>>>,
+    l: &mut Vec<Rc<RefCell<DAGNode<T>>>>,
+    permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>,
+) where
+    T: PartialEq,
+    T: Eq,
+    T: Ord,
+{
     // TODO FIXME keep the cycle detection
-    
+
     if permanently_marked_nodes.contains(&n) {
         return;
     }
@@ -58,7 +65,13 @@ pub fn topological_sort_visit<T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<RefC
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCell<DAGNode<T>>>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
+pub fn topological_sort<T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCell<DAGNode<T>>>>
+where
+    T: PartialEq,
+    T: Eq,
+    T: Ord,
+{
+    // unmarked nodes
     // Depth-first search
     let mut l = Vec::new();
     let mut permanently_marked_nodes = BTreeSet::new();
@@ -72,18 +85,32 @@ pub fn topological_sort<T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCel
 
 // technically this is a multi dag as there can be multiple roots and multiple heads (there may be usecases where multiple people create concurrently)
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Ord {
+pub struct DAGNode<T>
+where
+    T: PartialEq,
+    T: Eq,
+    T: Ord,
+{
     pub predecessors: BTreeSet<Rc<RefCell<DAGNode<T>>>>,
-    pub current_data: T
+    pub current_data: T,
 }
 
 #[derive(Debug)]
-pub struct RandomDAG<T>(pub Vec<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord, for<'a> T: Arbitrary<'a>, T: core::fmt::Debug;
+pub struct RandomDAG<T>(pub Vec<Rc<RefCell<DAGNode<T>>>>)
+where
+    T: PartialEq,
+    T: Eq,
+    T: Ord,
+    for<'a> T: Arbitrary<'a>,
+    T: core::fmt::Debug;
 
 impl<'a, T> Arbitrary<'a> for RandomDAG<T>
 where
-T: PartialEq, T: Eq, T: Ord, 
-    T: for<'b> arbitrary::Arbitrary<'b>, T: core::fmt::Debug
+    T: PartialEq,
+    T: Eq,
+    T: Ord,
+    T: for<'b> arbitrary::Arbitrary<'b>,
+    T: core::fmt::Debug,
 {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let len = u.arbitrary_len::<T>()?;
@@ -95,15 +122,15 @@ T: PartialEq, T: Eq, T: Ord,
         for _ in 0..len {
             let element = DAGNode {
                 predecessors: BTreeSet::new(),
-                current_data: T::arbitrary(u)?
+                current_data: T::arbitrary(u)?,
             };
             my_collection.0.push(Rc::new(RefCell::new(element)));
         }
         for _ in 0..u.int_in_range(0..=len * 10)? {
             let b = &my_collection.0;
-            let index_1 = u.int_in_range(0..=len-2)?;
+            let index_1 = u.int_in_range(0..=len - 2)?;
             let c = b[index_1].to_owned();
-            let d = b[u.int_in_range(index_1+1..=len-1)?].to_owned();
+            let d = b[u.int_in_range(index_1 + 1..=len - 1)?].to_owned();
             d.borrow_mut().predecessors.insert(c);
         }
 

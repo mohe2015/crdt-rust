@@ -1,12 +1,11 @@
-use std::{rc::Rc, cell::RefCell, collections::BTreeSet};
+use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
-use crdt::{DAGNodeCounter, topological_sort};
-
+use crdt::{topological_sort, DAGNodeCounter};
 
 fn main() {
     println!("Hello, world!");
 
-   let test1 = Rc::new(RefCell::new(DAGNodeCounter {
+    let test1 = Rc::new(RefCell::new(DAGNodeCounter {
         current_data: 0,
         predecessors: BTreeSet::from([]),
     }));
@@ -16,5 +15,4 @@ fn main() {
     }));
 
     println!("{:#?}", topological_sort(vec![test2]));
-
 }
