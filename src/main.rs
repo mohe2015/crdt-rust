@@ -43,15 +43,15 @@ function visit(node n)
 */
 
 pub fn topological_sort_visit<'a, T>(n: Rc<DAGNode<T>>, l: &mut Vec<Rc<DAGNode<T>>>, permanently_marked_nodes: &mut BTreeSet<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord {
-    if permanently_marked_nodes.contains(n) {
+    if permanently_marked_nodes.contains(&n) {
         return;
     }
 
-    for predecessor in n.predecessors {
-        topological_sort_visit(predecessor, l, permanently_marked_nodes);
+    for predecessor in &n.predecessors {
+        topological_sort_visit(predecessor.to_owned(), l, permanently_marked_nodes);
     }
 
-    permanently_marked_nodes.insert(n);
+    permanently_marked_nodes.insert(n.to_owned());
     l.push(n);
 }
 
@@ -78,7 +78,7 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub struct RandomDAG<T>(Vec<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
+pub struct RandomDAG<T>(Vec<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'static>;
 
 impl<T> Arbitrary<'static> for RandomDAG<T>
 where
@@ -91,7 +91,7 @@ T: PartialEq, T: Eq, T: Ord,
         // somebody needs to own this stuff so this is really hard
 
         // And then create a collection of that length!
-        let mut my_collection: Pin<Box<RandomDAG<T>>> = Box::pin(RandomDAG(Vec::with_capacity(len)));
+        let mut my_collection: RandomDAG<T> = RandomDAG(Vec::with_capacity(len));
         for i in 0..len {
             let element = DAGNode {
                 predecessors: vec![
@@ -103,7 +103,7 @@ T: PartialEq, T: Eq, T: Ord,
         for i in 0..len {
             let a = &my_collection;
             let b = &a.0;
-            let c = b[u.choose_index(i)?];
+            let c = b[u.choose_index(i)?].to_owned();
             my_collection.0[i].predecessors.push(c);
 
         }
@@ -123,15 +123,15 @@ pub type DAGNodeCounter<'a> = DAGNode<i64>;
 fn main() {
     println!("Hello, world!");
 
-   let test1 = DAGNodeCounter {
+   let test1 = Rc::new(DAGNodeCounter {
         current_data: 0,
-        predecessors: RefCell::new(vec![]),
-    };
-    let test2 = DAGNodeCounter {
+        predecessors: vec![],
+    });
+    let test2 = Rc::new(DAGNodeCounter {
         current_data: 5,
-        predecessors: RefCell::new(vec![&test1]),
-    };
+        predecessors: vec![test1],
+    });
 
-    println!("{:#?}", topological_sort(vec![&test2]));
+    println!("{:#?}", topological_sort(vec![test2]));
 
 }
