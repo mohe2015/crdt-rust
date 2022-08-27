@@ -42,17 +42,17 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<T>, l: &mut Vec<Rc<DAGNode<T>>>, permanently_marked_nodes: &mut BTreeSet<&'a Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord {
-    if permanently_marked_nodes.contains(&n) {
+pub fn topological_sort_visit<'a, T>(n: Rc<DAGNode<T>>, l: &mut Vec<Rc<DAGNode<T>>>, permanently_marked_nodes: &mut BTreeSet<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord {
+    if permanently_marked_nodes.contains(n) {
         return;
     }
 
-    for predecessor in n.predecessors.borrow().iter() {
+    for predecessor in n.predecessors {
         topological_sort_visit(predecessor, l, permanently_marked_nodes);
     }
 
     permanently_marked_nodes.insert(n);
-    l.push(&n);
+    l.push(n);
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
@@ -63,7 +63,7 @@ pub fn topological_sort<'a, T>(mut s: Vec<Rc<DAGNode<T>>>) -> Vec<Rc<DAGNode<T>>
 
     while !s.is_empty() {
         let val = s.pop().unwrap();
-        topological_sort_visit(&val, &mut l, &mut permanently_marked_nodes);
+        topological_sort_visit(val, &mut l, &mut permanently_marked_nodes);
     }
     l
 }
@@ -78,33 +78,33 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub struct RandomDAG<'a, T>(Vec<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
+pub struct RandomDAG<T>(Vec<Rc<DAGNode<T>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
 
-impl<'a, T> Arbitrary<'a> for Pin<Box<RandomDAG<'a, T>>>
+impl<T> Arbitrary<'static> for RandomDAG<T>
 where
 T: PartialEq, T: Eq, T: Ord, 
-    T: Arbitrary<'a>,
+    T: Arbitrary<'static>,
 {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'static>) -> arbitrary::Result<Self> {
         let len = u.arbitrary_len::<T>()?;
 
         // somebody needs to own this stuff so this is really hard
 
         // And then create a collection of that length!
-        let mut my_collection: Pin<Box<RandomDAG<'a, T>>> = Box::pin(RandomDAG(Vec::with_capacity(len)));
+        let mut my_collection: Pin<Box<RandomDAG<T>>> = Box::pin(RandomDAG(Vec::with_capacity(len)));
         for i in 0..len {
             let element = DAGNode {
-                predecessors: RefCell::new(vec![
-                ]),
+                predecessors: vec![
+                ],
                 current_data: T::arbitrary(u)?
             };
-            my_collection.0.push(Box::pin(element));
+            my_collection.0.push(Rc::new(element));
         }
         for i in 0..len {
             let a = &my_collection;
             let b = &a.0;
-            let c = &b[u.choose_index(i)?];
-            my_collection.0[i].predecessors.borrow_mut().push(c);
+            let c = b[u.choose_index(i)?];
+            my_collection.0[i].predecessors.push(c);
 
         }
 
