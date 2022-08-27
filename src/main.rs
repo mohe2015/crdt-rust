@@ -43,6 +43,8 @@ function visit(node n)
 */
 
 pub fn topological_sort_visit<'a, T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<RefCell<DAGNode<T>>>>, permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord {
+    // TODO FIXME keep the cycle detection
+    
     if permanently_marked_nodes.contains(&n) {
         return;
     }
@@ -93,7 +95,7 @@ T: PartialEq, T: Eq, T: Ord,
 
         // And then create a collection of that length!
         let mut my_collection: RandomDAG<T> = RandomDAG(Vec::with_capacity(len));
-        for i in 0..len {
+        for _ in 0..len {
             let element = DAGNode {
                 predecessors: BTreeSet::new(),
                 current_data: T::arbitrary(u)?
@@ -101,13 +103,12 @@ T: PartialEq, T: Eq, T: Ord,
             my_collection.0.push(Rc::new(RefCell::new(element)));
         }
         for i in u.int_in_range(0..=len * 10) {
-            let a = &my_collection;
-            let b = &a.0;
-            let c = b[u.choose_index(i)?].to_owned();
-            let d = b[u.choose_index(i)?].to_owned();
+            let b = &my_collection.0;
+            let index_1 = u.int_in_range(0..=i-len)?;
+            let c = b[index_1].to_owned();
+            let d = b[u.int_in_range(index_1+1..=len-1)?].to_owned();
             d.borrow_mut().predecessors.insert(c);
         }
-
 
         Ok(my_collection)
     }
