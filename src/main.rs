@@ -18,9 +18,11 @@
 
 // commutativity is required
 
-use std::{collections::{HashSet, BTreeSet}, hash::Hash, convert::Infallible, cell::RefCell};
+use std::{collections::{HashSet, BTreeSet}, hash::Hash, convert::Infallible, cell::RefCell, pin::Pin};
 
 use arbitrary::{Arbitrary, Unstructured};
+
+// https://doc.rust-lang.org/std/pin/index.html
 
 /*
 L ← Empty list that will contain the sorted nodes
@@ -75,7 +77,7 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub struct RandomDAG<'a, T>(Vec<DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
+pub struct RandomDAG<'a, T>(Vec<Pin<Box<DAGNode<'a, T>>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
 
 impl<'a, T> Arbitrary<'a> for RandomDAG<'a, T>
 where
@@ -93,7 +95,7 @@ T: PartialEq, T: Eq, T: Ord,
                 ]),
                 current_data: T::arbitrary(u)?
             };
-            my_collection.0.push(element);
+            my_collection.0.push(Box::pin(element));
         }
         for i in 0..len {
             my_collection.0[i].predecessors.borrow_mut().push(&my_collection.0[u.choose_index(i)?]);
