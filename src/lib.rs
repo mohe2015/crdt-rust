@@ -142,6 +142,10 @@ where
     }
 }
 
+pub fn counter(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<i64>>>>>) -> i64 {
+    iterator.map(|d| d.borrow().current_data).sum()
+}
+
 pub type DAGNodeCounter<'a> = DAGNode<i64>;
 
 //pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
