@@ -11,6 +11,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 crdt = { path = ".." }
+by_address = "1.0.4"
 
 # Prevent this from interfering with workspaces
 [workspace]

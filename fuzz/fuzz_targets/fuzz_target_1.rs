@@ -2,11 +2,11 @@
 use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::rc::Rc;
-use by_address::ByAddress;
 use crdt::DAGNode;
 use libfuzzer_sys::fuzz_target;
 use crdt::RandomDAG;
 use crdt::topological_sort;
+use by_address::ByAddress;
 
 fuzz_target!(|data: RandomDAG<i32>| {
     let result = topological_sort(data.0.clone());
