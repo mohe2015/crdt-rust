@@ -18,7 +18,7 @@
 
 // commutativity is required
 
-use std::{collections::HashSet, hash::Hash, convert::Infallible, cell::RefCell};
+use std::{collections::{HashSet, BTreeSet}, hash::Hash, convert::Infallible, cell::RefCell};
 
 use arbitrary::{Arbitrary, Unstructured};
 
@@ -39,12 +39,12 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<'a, T>, l: &mut Vec<&'a DAGNode<'a, T>>, permanently_marked_nodes: &mut HashSet<&'a DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Hash {
+pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<'a, T>, l: &mut Vec<&'a DAGNode<'a, T>>, permanently_marked_nodes: &mut BTreeSet<&'a DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Ord {
     if permanently_marked_nodes.contains(&n) {
         return;
     }
 
-    for predecessor in &n.predecessors {
+    for predecessor in n.predecessors.borrow().iter() {
         topological_sort_visit(predecessor, l, permanently_marked_nodes);
     }
 
@@ -53,10 +53,10 @@ pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<'a, T>, l: &mut Vec<&'a DAGN
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNode<'a, T>> where T: PartialEq, T: Eq, T: Hash { // unmarked nodes
+pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNode<'a, T>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
     // Depth-first search
     let mut l = Vec::new();
-    let mut permanently_marked_nodes = HashSet::new();
+    let mut permanently_marked_nodes = BTreeSet::new();
 
     while !s.is_empty() {
         let val = s.pop().unwrap();
@@ -65,8 +65,8 @@ pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNod
     l
 }
 
-#[derive(PartialEq, Eq, Hash, Debug)]
-pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Hash {
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Ord {
     predecessors: RefCell<Vec<&'a DAGNode<'a, T>>>,
     current_data: T
 }
@@ -75,17 +75,14 @@ pub struct CurrentState<T> {
     state: T
 }
 
-pub struct RandomDAG<'a, T>(Vec<DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Hash, T: Arbitrary<'a>;
+pub struct RandomDAG<'a, T>(Vec<DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'a>;
 
 impl<'a, T> Arbitrary<'a> for RandomDAG<'a, T>
 where
-T: PartialEq, T: Eq, T: Hash, 
+T: PartialEq, T: Eq, T: Ord, 
     T: Arbitrary<'a>,
 {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        // Get an iterator of arbitrary `T`s.
-        let iter = u.arbitrary_iter::<T>()?;
-
         let len = u.arbitrary_len::<T>()?;
 
         // And then create a collection of that length!
@@ -120,11 +117,11 @@ fn main() {
 
    let test1 = DAGNodeCounter {
         current_data: 0,
-        predecessors: vec![],
+        predecessors: RefCell::new(vec![]),
     };
     let test2 = DAGNodeCounter {
         current_data: 5,
-        predecessors: vec![&test1],
+        predecessors: RefCell::new(vec![&test1]),
     };
 
     println!("{:#?}", topological_sort(vec![&test2]));
