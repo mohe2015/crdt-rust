@@ -78,14 +78,14 @@ pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Ord {
 }
 
 #[derive(Debug)]
-pub struct RandomDAG<T>(pub Vec<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord, T: Arbitrary<'static>, T: core::fmt::Debug;
+pub struct RandomDAG<T>(pub Vec<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord, for<'a> T: Arbitrary<'a>, T: core::fmt::Debug;
 
-impl<T> Arbitrary<'static> for RandomDAG<T>
+impl<'a, T> Arbitrary<'a> for RandomDAG<T>
 where
 T: PartialEq, T: Eq, T: Ord, 
-    T: Arbitrary<'static>, T: core::fmt::Debug
+    T: for<'b> arbitrary::Arbitrary<'b>, T: core::fmt::Debug
 {
-    fn arbitrary(u: &mut Unstructured<'static>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let len = u.arbitrary_len::<T>()?;
 
         // somebody needs to own this stuff so this is really hard
