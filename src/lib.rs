@@ -17,7 +17,7 @@
 
 // commutativity is required
 
-use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
+use std::{cell::RefCell, collections::{BTreeSet, HashSet}, rc::Rc, iter::Sum};
 
 use arbitrary::{Arbitrary, Unstructured};
 use by_address::ByAddress;
@@ -67,6 +67,7 @@ pub fn topological_sort_visit<T>(
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
+// TODO FIXME Implement this as an lazy iterator
 pub fn topological_sort<T>(mut s: Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>) -> Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>
 where
     T: PartialEq,
@@ -142,9 +143,52 @@ where
     }
 }
 
-pub fn counter(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<i64>>>>>) -> i64 {
+pub fn merge<T>(graphs: Vec<Vec<ByAddress<Rc<RefCell<DAGNode<T>>>>>>) where
+T: PartialEq,
+T: Eq,
+T: Ord, {
+    // the references can't be equal as they're from different sources so we probably need to somehow join them based on an id.
+    // if we only create duplicated graphs locally this is a noop
+}
+
+pub fn max<S: Ord>(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<S>>>>>) -> Option<S> {
+    iterator.map(|d| d.borrow().current_data).max()
+}
+
+pub fn min<S: Ord>(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<S>>>>>) -> Option<S> {
+    iterator.map(|d| d.borrow().current_data).min()
+}
+
+pub fn counter<S: Sum + Ord>(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<S>>>>>) -> S {
     iterator.map(|d| d.borrow().current_data).sum()
 }
+
+#[derive(PartialOrd)]
+pub enum AddOrRemove<T> {
+    Add(T),
+    Remove(T)
+}
+
+// https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#OR-Set_(Observed-Remove_Set)
+pub fn observed_remove_set<T: Ord>(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<AddOrRemove<T>>>>>>) -> BTreeSet<T> {
+    iterator.fold(BTreeSet::new(), |result, v| {
+        match v.borrow().current_data {
+            AddOrRemove::Add(x) => {
+                result.insert(x)
+            },
+            AddOrRemove::Remove(x) => {
+                result.remove(&x)
+            },
+        }
+    })
+}
+
+/*
+pub fn ordered_set<T: Ord>(iterator: impl Iterator<Item=ByAddress<Rc<RefCell<DAGNode<Vec<T>>>>>>) -> Vec<T> {
+    // add to left of, add to right of
+}
+*/
+
 
 pub type DAGNodeCounter<'a> = DAGNode<i64>;
 
