@@ -18,7 +18,7 @@
 
 // commutativity is required
 
-use std::{collections::{HashSet, BTreeSet}, hash::Hash, convert::Infallible, cell::RefCell, pin::Pin, rc::Rc};
+use std::{collections::{BTreeSet}, cell::RefCell, rc::Rc};
 
 use arbitrary::{Arbitrary, Unstructured};
 
