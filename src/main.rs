@@ -18,7 +18,9 @@
 
 // commutativity is required
 
-use std::{collections::HashSet, hash::Hash};
+use std::{collections::HashSet, hash::Hash, convert::Infallible};
+
+use arbitrary::{Arbitrary, Unstructured};
 
 /*
 L ← Empty list that will contain the sorted nodes
@@ -71,6 +73,28 @@ pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Hash {
 
 pub struct CurrentState<T> {
     state: T
+}
+
+pub struct RandomDAG<'a, T>(Vec<DAGNode<'a, T>>) where T: PartialEq, T: Eq, T: Hash, T: Arbitrary<'a>;
+
+impl<'a, T> Arbitrary<'a> for RandomDAG<'a, T>
+where
+T: PartialEq, T: Eq, T: Hash, 
+    T: Arbitrary<'a>,
+{
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // Get an iterator of arbitrary `T`s.
+        let iter = u.arbitrary_iter::<T>()?;
+
+        // And then create a collection!
+        let mut my_collection = RandomDAG(Vec::new());
+        for elem_result in iter {
+            let elem = elem_result?;
+            my_collection.insert(elem);
+        }
+
+        Ok(my_collection)
+    }
 }
 
 pub type DAGNodeCounter<'a> = DAGNode<'a, i64>;
