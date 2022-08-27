@@ -51,7 +51,7 @@ pub fn topological_sort_visit<'a, T>(n: &'a DAGNode<'a, T>, l: &mut Vec<&'a DAGN
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<'a, T>(mut s: Vec<&DAGNode<T>>) where T: PartialEq, T: Eq, T: Hash { // unmarked nodes
+pub fn topological_sort<'a, T>(mut s: Vec<&'a DAGNode<'a, T>>) -> Vec<&'a DAGNode<'a, T>> where T: PartialEq, T: Eq, T: Hash { // unmarked nodes
     // Depth-first search
     let mut l = Vec::new();
     let mut permanently_marked_nodes = HashSet::new();
@@ -60,9 +60,10 @@ pub fn topological_sort<'a, T>(mut s: Vec<&DAGNode<T>>) where T: PartialEq, T: E
         let val = s.pop().unwrap();
         topological_sort_visit(&val, &mut l, &mut permanently_marked_nodes);
     }
+    l
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub struct DAGNode<'a, T> where T: PartialEq, T: Eq, T: Hash {
     predecessors: Vec<&'a DAGNode<'a, T>>,
     current_data: T
@@ -72,7 +73,7 @@ pub struct CurrentState<T> {
     state: T
 }
 
-//pub type DAGNodeCounter = DAGNode<i64>;
+pub type DAGNodeCounter<'a> = DAGNode<'a, i64>;
 
 //pub type DAGNodeOrderedSet = DAGNode<Vec<i64>>;
 
@@ -83,14 +84,15 @@ pub struct CurrentState<T> {
 fn main() {
     println!("Hello, world!");
 
-   /* let test1 = DAGNodeCounter {
+   let test1 = DAGNodeCounter {
         current_data: 0,
         predecessors: vec![],
     };
     let test2 = DAGNodeCounter {
         current_data: 5,
-        predecessors: vec![test1],
-    };*/
+        predecessors: vec![&test1],
+    };
 
+    println!("{:#?}", topological_sort(vec![&test2]));
 
 }
