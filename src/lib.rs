@@ -42,7 +42,7 @@ function visit(node n)
     add n to head of L
 */
 
-pub fn topological_sort_visit<'a, T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<RefCell<DAGNode<T>>>>, permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord {
+pub fn topological_sort_visit<T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<RefCell<DAGNode<T>>>>, permanently_marked_nodes: &mut BTreeSet<Rc<RefCell<DAGNode<T>>>>) where T: PartialEq, T: Eq, T: Ord {
     // TODO FIXME keep the cycle detection
     
     if permanently_marked_nodes.contains(&n) {
@@ -58,7 +58,7 @@ pub fn topological_sort_visit<'a, T>(n: Rc<RefCell<DAGNode<T>>>, l: &mut Vec<Rc<
 }
 
 // https://en.wikipedia.org/wiki/Topological_sorting
-pub fn topological_sort<'a, T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCell<DAGNode<T>>>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
+pub fn topological_sort<T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<RefCell<DAGNode<T>>>> where T: PartialEq, T: Eq, T: Ord { // unmarked nodes
     // Depth-first search
     let mut l = Vec::new();
     let mut permanently_marked_nodes = BTreeSet::new();
@@ -75,10 +75,6 @@ pub fn topological_sort<'a, T>(mut s: Vec<Rc<RefCell<DAGNode<T>>>>) -> Vec<Rc<Re
 pub struct DAGNode<T> where T: PartialEq, T: Eq, T: Ord {
     pub predecessors: BTreeSet<Rc<RefCell<DAGNode<T>>>>,
     pub current_data: T
-}
-
-pub struct CurrentState<T> {
-    state: T
 }
 
 #[derive(Debug)]
@@ -103,7 +99,7 @@ T: PartialEq, T: Eq, T: Ord,
             };
             my_collection.0.push(Rc::new(RefCell::new(element)));
         }
-        for _ in u.int_in_range(0..=len * 10) {
+        for _ in 0..u.int_in_range(0..=len * 10)? {
             let b = &my_collection.0;
             let index_1 = u.int_in_range(0..=len-2)?;
             let c = b[index_1].to_owned();
