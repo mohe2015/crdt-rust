@@ -102,9 +102,9 @@ T: PartialEq, T: Eq, T: Ord,
             };
             my_collection.0.push(Rc::new(RefCell::new(element)));
         }
-        for i in u.int_in_range(0..=len * 10) {
+        for _ in u.int_in_range(0..=len * 10) {
             let b = &my_collection.0;
-            let index_1 = u.int_in_range(0..=i-len)?;
+            let index_1 = u.int_in_range(0..=len-2)?;
             let c = b[index_1].to_owned();
             let d = b[u.int_in_range(index_1+1..=len-1)?].to_owned();
             d.borrow_mut().predecessors.insert(c);
