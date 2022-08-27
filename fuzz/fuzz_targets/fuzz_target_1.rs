@@ -17,7 +17,11 @@ use by_address::ByAddress;
 
 
 fuzz_target!(|data: RandomDAG<i32>| {
-    let result = topological_sort(data.0.clone());
+    let mut result = topological_sort(data.0.clone());
+
+    /*if result.len() > 1 {
+        result.swap(0, 1);
+    }*/
     
     assert_eq!(data.0.len(), result.len());
 
