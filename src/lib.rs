@@ -126,12 +126,14 @@ where
             };
             my_collection.0.push(Rc::new(RefCell::new(element)));
         }
-        for _ in 0..u.int_in_range(0..=len * 10)? {
-            let b = &my_collection.0;
-            let index_1 = u.int_in_range(0..=len - 2)?;
-            let c = b[index_1].to_owned();
-            let d = b[u.int_in_range(index_1 + 1..=len - 1)?].to_owned();
-            d.borrow_mut().predecessors.insert(c);
+        if len > 1 {
+            for _ in 0..u.int_in_range(0..=len * 10)? {
+                let b = &my_collection.0;
+                let index_1 = u.int_in_range(0..=len - 2)?;
+                let c = b[index_1].to_owned();
+                let d = b[u.int_in_range(index_1 + 1..=len - 1)?].to_owned();
+                d.borrow_mut().predecessors.insert(c);
+            }
         }
 
         Ok(my_collection)
